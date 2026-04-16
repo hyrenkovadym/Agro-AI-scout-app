@@ -4,7 +4,7 @@
     "slug": "AI-app-Frendt",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/agro-ai-app-icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -17,12 +17,21 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/agro-ai-app-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow access to photos for plant analysis.",
+          "cameraPermission": "Allow camera access to analyze plant photos."
+        }
+      ]
+    ],
     "web": {
       "favicon": "./assets/favicon.png"
     }
