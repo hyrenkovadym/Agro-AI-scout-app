@@ -113,6 +113,13 @@ export function AnalysisResultModal({
               </View>
 
               <View style={styles.sectionBlock}>
+                <Text style={styles.sectionTitle}>Safety note</Text>
+                <Text style={styles.sectionItem}>
+                  AI output is a preliminary recommendation and not a certified agronomist diagnosis.
+                </Text>
+              </View>
+
+              <View style={styles.sectionBlock}>
                 <Text style={styles.sectionTitle}>Додатковий опис</Text>
                 <TextInput
                   value={additionalAnalysisContext}

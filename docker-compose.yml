@@ -1,0 +1,12 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: agro-ai-scout-backend
+    ports:
+      - "8787:8787"
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend/data:/app/data
+

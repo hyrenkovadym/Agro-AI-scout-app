@@ -7,6 +7,7 @@ import { AnalysisResultModal, AuthScreen, SeasonDetailsModal } from "./src/compo
 import { plantCatalog, popularPlantIds } from "./src/constants";
 import { styles } from "./src/styles/appStyles";
 import {
+  AnalysesResponse,
   AnalysisRecord,
   AuthDraft,
   AuthMode,
@@ -67,6 +68,7 @@ export default function App() {
   const [catalogDiseasesQuery, setCatalogDiseasesQuery] = useState("");
   const [pickedImage, setPickedImage] = useState<PickedImage | null>(null);
   const [latestAnalysis, setLatestAnalysis] = useState<AnalysisRecord | null>(null);
+  const [analysisHistory, setAnalysisHistory] = useState<AnalysisRecord[]>([]);
   const [additionalAnalysisContext, setAdditionalAnalysisContext] = useState("");
   const [analysisHint, setAnalysisHint] = useState<string | null>(null);
 
@@ -264,6 +266,18 @@ export default function App() {
     setClients(payload.clients);
   }, []);
 
+  const refreshAnalyses = useCallback(async (authToken: string) => {
+    const payload = await apiRequest<AnalysesResponse>("/analyses", { token: authToken });
+    setAnalysisHistory(payload.analyses);
+
+    if (payload.analyses.length > 0) {
+      setLatestAnalysis(payload.analyses[0]);
+      return;
+    }
+
+    setLatestAnalysis(null);
+  }, []);
+
   const ensureQuickAnalysisClient = useCallback(
     async (authToken: string) => {
       const quickClient =
@@ -319,7 +333,7 @@ export default function App() {
 
       setToken(response.token);
       setUser(response.user);
-      await refreshClients(response.token);
+      await Promise.all([refreshClients(response.token), refreshAnalyses(response.token)]);
       setAuthDraft((prev) => ({ ...prev, password: "" }));
       setActivePage("home");
       setErrorText(null);
@@ -344,7 +358,7 @@ export default function App() {
     setIsRefreshing(true);
 
     try {
-      await refreshClients(token);
+      await Promise.all([refreshClients(token), refreshAnalyses(token)]);
       const mePayload = await apiRequest<MeResponse>("/me", { token });
       setUser(mePayload.user);
     } catch (error) {
@@ -515,6 +529,10 @@ export default function App() {
       });
 
       setLatestAnalysis(response.analysis);
+      setAnalysisHistory((current) => {
+        const next = current.filter((item) => item.id !== response.analysis.id);
+        return [response.analysis, ...next].slice(0, 80);
+      });
       setAnalysisHint(
         extraContext.trim()
           ? "Аналіз оновлено з урахуванням додаткового опису."
@@ -744,19 +762,48 @@ export default function App() {
         )}
       </Pressable>
 
+      {pickedImage ? (
+        <Text style={styles.metaText}>
+          Selected photo is ready. You can reopen the latest result and run a re-analysis with extra context.
+        </Text>
+      ) : null}
+
       {latestAnalysis && (
         <View style={styles.lastAnalysisCard}>
-          <Text style={styles.lastAnalysisTitle}>Останній аналіз</Text>
+          <Text style={styles.lastAnalysisTitle}>Latest analysis</Text>
           <Text style={styles.lastAnalysisProblem}>{latestAnalysis.diagnosis.problemName}</Text>
-          <Text style={styles.lastAnalysisMeta}>
-            Ймовірність: {resolveProbability(latestAnalysis.diagnosis)}
-          </Text>
-          <Text style={styles.lastAnalysisMeta}>Р”Р°С‚Р°: {formatDateTime(latestAnalysis.createdAt)}</Text>
+          <Text style={styles.lastAnalysisMeta}>Probability: {resolveProbability(latestAnalysis.diagnosis)}</Text>
+          <Text style={styles.lastAnalysisMeta}>Date: {formatDateTime(latestAnalysis.createdAt)}</Text>
           <Pressable onPress={() => setResultSheetVisible(true)} style={styles.lastAnalysisButton}>
-            <Text style={styles.lastAnalysisButtonText}>Відкрити деталі</Text>
+            <Text style={styles.lastAnalysisButtonText}>Open details</Text>
           </Pressable>
         </View>
       )}
+
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Analysis history</Text>
+        {analysisHistory.length === 0 ? (
+          <Text style={styles.emptyStateText}>
+            No analysis history yet. Run your first photo analysis to see saved records.
+          </Text>
+        ) : (
+          analysisHistory.slice(0, 5).map((item) => (
+            <Pressable
+              key={item.id}
+              onPress={() => {
+                setLatestAnalysis(item);
+                setResultSheetVisible(true);
+              }}
+              style={styles.plantCard}
+            >
+              <Text style={styles.diseaseName}>{item.diagnosis.problemName}</Text>
+              <Text style={styles.diseaseMeta}>Plant: {item.diagnosis.probablePlant || item.clientName}</Text>
+              <Text style={styles.diseaseMeta}>Probability: {resolveProbability(item.diagnosis)}</Text>
+              <Text style={styles.metaText}>{formatDateTime(item.createdAt)}</Text>
+            </Pressable>
+          ))
+        )}
+      </View>
     </ScrollView>
   );
 

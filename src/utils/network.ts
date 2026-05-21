@@ -1,8 +1,7 @@
 import Constants from "expo-constants";
 import { Platform } from "react-native";
 
-const defaultApiUrl =
-  Platform.OS === "android" ? "http://10.0.2.2:8787" : "http://localhost:8787";
+const defaultApiUrl = Platform.OS === "android" ? "http://10.0.2.2:8787" : "http://localhost:8787";
 
 const extractHost = (value: string | null | undefined): string | null => {
   if (!value) {
@@ -73,58 +72,48 @@ export class ApiError extends Error {
   }
 }
 
+const backendErrorMap: Record<string, string> = {
+  "Valid email is required.": "Please enter a valid email address.",
+  "Password must be at least 6 characters.": "Password must contain at least 6 characters.",
+  "Name is required.": "Please enter your name.",
+  "User with this email already exists.": "An account with this email already exists.",
+  "Email and password are required.": "Please enter email and password.",
+  "Account not found. Please register first.": "Account not found. Please register first.",
+  "Invalid password.": "Invalid password.",
+  "Current and new password are required.": "Please enter current and new password.",
+  "Current password is invalid.": "Current password is invalid.",
+  "Language code format is invalid.": "Invalid language code format (e.g., uk, en, pl, pt-BR).",
+  "Unauthorized. Please login again.": "Session expired. Please sign in again.",
+  "Client name is required.": "Client name is required.",
+  "OPENAI_API_KEY is missing in backend/.env":
+    "Backend OPENAI_API_KEY is missing in backend/.env.",
+  "clientId is required.": "clientId is required.",
+  "imageBase64 is required.": "Photo data is required (imageBase64).",
+  "imageBase64 is invalid.": "Photo data format is invalid. Please try another image.",
+  "Unsupported image type. Use JPEG, PNG, or WEBP.":
+    "Unsupported image type. Use JPEG, PNG, or WEBP.",
+  "Image is too large.": "Image is too large. Please use a smaller photo.",
+  "Client not found.": "Client not found.",
+  "Unknown analysis error": "Unknown analysis error.",
+};
+
 export const buildFriendlyError = (error: unknown): string => {
-  const hasCyrillic = (text: string) => /[А-Яа-яЇїІіЄєҐґ]/.test(text);
-  const hasLatin = (text: string) => /[A-Za-z]/.test(text);
-
   if (error instanceof ApiError && error.message.trim()) {
-    const backendMap: Record<string, string> = {
-      "Valid email is required.": "Вкажіть коректну ел. пошту.",
-      "Password must be at least 6 characters.": "Пароль має містити щонайменше 6 символів.",
-      "Name is required.": "Вкажіть ім'я.",
-      "User with this email already exists.": "Користувач з таким email вже існує.",
-      "Email and password are required.": "Вкажіть email і пароль.",
-      "Account not found. Please register first.": "Акаунт не знайдено. Спочатку зареєструйтесь.",
-      "Invalid password.": "Невірний пароль.",
-      "Current and new password are required.": "Вкажіть поточний і новий пароль.",
-      "Current password is invalid.": "Поточний пароль невірний.",
-      "Language code format is invalid.": "Невірний формат коду мови (наприклад: uk, en, pl, pt-BR).",
-      "Unauthorized. Please login again.": "Сесію завершено. Увійдіть повторно.",
-      "Client name is required.": "Вкажіть ім'я клієнта.",
-      "OPENAI_API_KEY is missing in backend/.env": "У backend/.env відсутній OPENAI_API_KEY.",
-      "clientId is required.": "Поле clientId є обов'язковим.",
-      "imageBase64 is required.": "Потрібно додати фото (imageBase64).",
-      "Image is too large.": "Фото занадто велике. Спробуйте менший розмір.",
-      "Client not found.": "Клієнта не знайдено.",
-      "Unknown analysis error": "Невідома помилка аналізу.",
-    };
-
-    if (backendMap[error.message]) {
-      return backendMap[error.message];
-    }
-
-    if (hasLatin(error.message) && !hasCyrillic(error.message)) {
-      return "Сталася помилка сервера. Спробуйте ще раз.";
-    }
-
-    return error.message;
+    return backendErrorMap[error.message] || error.message;
   }
 
   if (error instanceof Error) {
     const message = error.message.trim();
     if (message === "Network request failed" || message === "fetch failed") {
-      return `Не вдалося підключитися до API (${apiUrl}). Перевірте запуск backend і мережу.`;
+      return `Cannot connect to API (${apiUrl}). Check backend status and local network access.`;
     }
 
     if (message) {
-      if (hasLatin(message) && !hasCyrillic(message)) {
-        return "Сталася помилка застосунку. Спробуйте ще раз.";
-      }
       return message;
     }
   }
 
-  return "Сталася невідома помилка. Спробуйте ще раз.";
+  return "Unknown application error. Please try again.";
 };
 
 export const apiRequest = async <T,>(
@@ -154,8 +143,9 @@ export const apiRequest = async <T,>(
     | null;
 
   if (!response.ok) {
-    throw new ApiError(data?.error || `Помилка запиту (${response.status})`, response.status);
+    throw new ApiError(data?.error || `Request failed (${response.status})`, response.status);
   }
 
   return (data ?? {}) as T;
 };
+

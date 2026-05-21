@@ -1,5 +1,5 @@
 {
-  "name": "ai-app-frendt",
+  "name": "agro-ai-scout-app",
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
@@ -8,7 +8,9 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "api": "npm --prefix backend run dev",
-    "api:start": "npm --prefix backend run start"
+    "api:start": "npm --prefix backend run start",
+    "typecheck": "tsc --noEmit",
+    "test:backend": "npm --prefix backend run test"
   },
   "dependencies": {
     "expo": "~54.0.33",

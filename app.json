@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "AI-app-Frendt",
-    "slug": "AI-app-Frendt",
+    "name": "Agro AI Scout",
+    "slug": "agro-ai-scout",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/agro-ai-app-icon.png",

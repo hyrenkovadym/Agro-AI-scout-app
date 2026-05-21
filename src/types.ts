@@ -59,6 +59,10 @@ export type ClientsResponse = {
   clients: Client[];
 };
 
+export type AnalysesResponse = {
+  analyses: AnalysisRecord[];
+};
+
 export type MeResponse = {
   user: User;
 };
